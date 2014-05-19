@@ -1,4 +1,6 @@
 ﻿using System;
+using System.CodeDom;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using DivideAndConquer;
@@ -27,6 +29,29 @@ namespace DivideAndConquerTests
             var rand = new Random(DateTime.Now.Millisecond);
             var nbComparisons = _lib.QuickSort(input, (ints, l, r) => rand.Next(l, r));
             CollectionAssert.AreEqual(input, new[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+        }
+
+        [TestMethod]
+        public void TestRSelect()
+        {
+            var rand = new Random(DateTime.Now.Millisecond);
+            for(int i = 1; i < 7; i++)
+            {
+                var input = new[] { 2, 4, 5, 1, 7, 8, 3, 6 };
+                var result = _lib.RSelect(input, i-1, (ints, l, r) => rand.Next(l, r));
+                Assert.IsTrue(result == i);
+            }
+        }
+
+        [TestMethod]
+        public void TestRSelectBis()
+        {
+            var rand = new Random(DateTime.Now.Millisecond);
+            var fixture = new Fixture();
+            var input = fixture.CreateMany<int>(1000).ToArray();
+            var order = rand.Next(1, 999);
+            var result = _lib.RSelect(input, order - 1, (ints, l, r) => rand.Next(l, r)); // order - 1 because 0-based array
+            Assert.IsTrue(result == input.OrderBy(i => i).ElementAt(order - 1));
         }
 
         [TestMethod]
@@ -66,25 +91,26 @@ namespace DivideAndConquerTests
         [TestMethod]
         public void TestQuickSortCountComparisonsFromFileWithPivotFirstElement()
         {
-            var filePath = @"c:\QuickSort.txt";
+            var fileContent = TestResources.QuickSort;
+            var inputArray = getInputArray(fileContent).Select(int.Parse).ToArray();
             Func<int[], int, int, int> choosePivot = (input, left, right) => left;
-            var nbComparisons = _lib.CountComparisonInQuickSortFromFile(filePath, choosePivot);
+            var nbComparisons = _lib.QuickSort(inputArray, choosePivot);
             Assert.IsTrue(nbComparisons == 162085);
         }
 
         [TestMethod]
         public void TestQuickSortCountComparisonsFromFileWithPivotLastElement()
         {
-            var filePath = @"c:\QuickSort.txt";
+            var fileContent = TestResources.QuickSort;
+            var inputArray = getInputArray(fileContent).Select(int.Parse).ToArray();
             Func<int[], int, int, int> choosePivot = (input, left, right) => right;
-            var nbComparisons = _lib.CountComparisonInQuickSortFromFile(filePath, choosePivot);
+            var nbComparisons = _lib.QuickSort(inputArray, choosePivot);
             Assert.IsTrue(nbComparisons == 164123);
         }
 
         [TestMethod]
         public void TestQuickSortCountComparisonsFromFileWithPivotMedianElement()
         {
-            var filePath = @"c:\QuickSort.txt";
             Func<int[], int, int, int> choosePivot = (input, left, right) =>
             {
                 var length = right - left + 1;
@@ -100,7 +126,9 @@ namespace DivideAndConquerTests
                         ? right
                         : medIndex + left;
             };
-            var nbComparisons = _lib.CountComparisonInQuickSortFromFile(filePath, choosePivot);
+            var fileContent = TestResources.QuickSort;
+            var inputArray = getInputArray(fileContent).Select(int.Parse).ToArray();
+            var nbComparisons = _lib.QuickSort(inputArray, choosePivot);
             Assert.IsTrue(nbComparisons == 138382);
         }
 
@@ -164,8 +192,9 @@ namespace DivideAndConquerTests
         [TestMethod]
         public void TestCountInvInFile()
         {
-            var filePath = @"c:\IntegerArray.txt";
-            var result = _lib.CountInvInFile(filePath);
+            var fileContent = TestResources.IntegerArray;
+            var inputArray = getInputArray(fileContent).Select(long.Parse).ToArray();
+            var result = _lib.CountInv(inputArray);
             Assert.IsTrue(result > 0);
         }
 
@@ -251,6 +280,12 @@ namespace DivideAndConquerTests
             var quickSortTime = watch.ElapsedMilliseconds;
             CollectionAssert.AreEqual(qsResult, input_2.OrderBy(i => i).ToArray());
             watch.Reset();
+        }
+
+        private IEnumerable<string> getInputArray(string content)
+        {
+            return content.Split(new string[] {"\r\n"}, StringSplitOptions.None)
+                          .Where(s => !string.IsNullOrEmpty(s));
         }
     }
 }

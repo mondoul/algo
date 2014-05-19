@@ -1,29 +1,10 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 
 namespace DivideAndConquer
 {
     public class SortLib
     {
-        public long CountInvInFile(string file)
-        {
-            if (!File.Exists(file)) return -1;
-
-            long[] input = File.ReadLines(file).Select(long.Parse).ToArray();
-
-            return CountInv(input);
-        }
-
-        public int CountComparisonInQuickSortFromFile(string file, Func<int[], int, int, int> choosePivot)
-        {
-            if (!File.Exists(file)) return -1;
-
-            int[] input = File.ReadLines(file).Select(int.Parse).ToArray();
-
-            return QuickSort(input, choosePivot);
-        }
-
         public int[] MergeSort(int[] input)
         {
             if (input.Count() <= 1)
@@ -69,6 +50,16 @@ namespace DivideAndConquer
             return nbComparisons;
         }
 
+        public int RSelect(int[] input, int orderStatistic, Func<int[], int, int, int> choosePivot)
+        {
+            if (input.Length == 1) return input[0];
+
+            var selection = Partition(input, 0, input.Length - 1, orderStatistic, choosePivot);
+
+            return selection;
+        }
+
+
         private void ChoosePivot(int[] input, int left, int right, Func<int[], int, int, int> choosePivot)
         {
             var pivot = choosePivot(input, left, right);
@@ -99,6 +90,35 @@ namespace DivideAndConquer
                 nbComparisons += Partition(input, i, right, choosePivot);
 
             return nbComparisons;
+        }
+
+        private int Partition(int[] input, int left, int right, int order, Func<int[], int, int, int> choosePivot)
+        {
+            ChoosePivot(input, left, right, choosePivot);
+            var pivot = input[left];
+            var i = left + 1;
+            for (var j = left + 1; j <= right; j++)
+            {
+                if (input[j] >= pivot) continue;
+                if (input[j] != input[i])
+                {
+                    Swap(input, i, j);
+                }
+                i++; // move separation to the right
+            }
+            Swap(input, left, i - 1); // put pivot back in its place
+
+            if (i - 1 == order) // pivot is the order statistics
+                return input[i - 1];
+            if (i - 1 > order) // pivot is bigger
+            {
+                if (left - i + 2 == 1) // but only 1 element left
+                    return input[i - 2];
+                return Partition(input, left, i - 2, order, choosePivot); // recurs on left part
+            }
+            if (right - i == 1) //pivot is smaller but only 1 element left
+                return input[i];
+            return Partition(input, i, right, order, choosePivot); // recurs on right part
         }
 
         private void Swap(int[] input, int a, int b)
